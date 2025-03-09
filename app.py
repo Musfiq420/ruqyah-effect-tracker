@@ -15,7 +15,7 @@ from urllib.parse import urlencode
 creds_auth = st.secrets["oauth_credentials"]["json"]
 
 # Use the credentials to authorize the OAuth flow
-REDIRECT_URI = "http://localhost:8501/"  # Streamlit default local URL
+REDIRECT_URI = "https://ruqyah-effect-tracker.streamlit.app/"  # Streamlit default local URL
 SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/userinfo.profile",
