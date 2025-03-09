@@ -6,7 +6,9 @@ from google_auth_oauthlib.flow import Flow
 import pandas as pd
 
 # Google OAuth setup
-CLIENT_SECRETS_FILE = "client_secret_284958362588-0m61ip48a73s0jgnirfhn1hnn4irh8ok.apps.googleusercontent.com.json"  # Replace with your credentials file
+# Load OAuth credentials from Streamlit secrets
+creds_auth = st.secrets["oauth_credentials"]["json"]
+
 REDIRECT_URI = "http://localhost:8501/"  # Streamlit default local URL
 SCOPES = ["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile", "openid"]
 
@@ -16,8 +18,8 @@ if "user_email" not in st.session_state:
 
 def authenticate_user():
     """Start the OAuth authentication flow"""
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=REDIRECT_URI
+    flow = Flow.from_client_config(
+        creds_auth, scopes=SCOPES, redirect_uri=REDIRECT_URI
     )
     auth_url, state = flow.authorization_url(prompt="consent")
     st.session_state.oauth_state = state
@@ -25,8 +27,8 @@ def authenticate_user():
 
 def get_user_info():
     """Fetch user info after authentication"""
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=REDIRECT_URI
+    flow = Flow.from_client_config(
+        creds_auth, scopes=SCOPES, redirect_uri=REDIRECT_URI
     )
     flow.fetch_token(authorization_response=st.query_params.get("code"))
 
