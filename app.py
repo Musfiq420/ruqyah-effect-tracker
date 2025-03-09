@@ -1,16 +1,26 @@
+import os
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 from google.oauth2 import service_account
 from google_auth_oauthlib.flow import Flow
 import pandas as pd
+import requests
+from urllib.parse import urlencode
 
 # Google OAuth setup
 # Load OAuth credentials from Streamlit secrets
 creds_auth = st.secrets["oauth_credentials"]["json"]
 
-REDIRECT_URI = "https://ruqyah-effect-tracker.streamlit.app/"  # Streamlit default local URL
-SCOPES = ["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile", "openid"]
+# Use the credentials to authorize the OAuth flow
+REDIRECT_URI = "http://localhost:8501/"  # Streamlit default local URL
+SCOPES = [
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
+    "openid"
+]
 
 # Authentication
 if "user_email" not in st.session_state:
@@ -27,15 +37,20 @@ def authenticate_user():
 
 def get_user_info():
     """Fetch user info after authentication"""
+    # Construct the full redirect URL from query parameters
+    query_string = urlencode(st.query_params.to_dict())
+    redirect_response = f"{REDIRECT_URI}?{query_string}"
+
+    # Initialize the OAuth flow
     flow = Flow.from_client_config(
         creds_auth, scopes=SCOPES, redirect_uri=REDIRECT_URI
     )
-    flow.fetch_token(authorization_response=st.query_params.get("code"))
 
+    # Fetch the token using the full redirect URL
+    flow.fetch_token(authorization_response=redirect_response)
+
+    # Get user info
     credentials = flow.credentials
-    from google.auth.transport.requests import Request
-    import requests
-
     user_info_endpoint = "https://www.googleapis.com/oauth2/v2/userinfo"
     user_info = requests.get(user_info_endpoint, headers={"Authorization": f"Bearer {credentials.token}"}).json()
     
@@ -44,16 +59,20 @@ def get_user_info():
 if st.session_state.user_email is None:
     authenticate_user()
     if "code" in st.query_params:
-        email, name = get_user_info()
-        st.session_state.user_email = email
-        st.session_state.user_name = name
-        st.success(f"Welcome, {name} ({email})!")
+        try:
+            email, name = get_user_info()
+            st.session_state.user_email = email
+            st.session_state.user_name = name
+            st.success(f"Welcome, {name} ({email})!")
+            st.rerun()
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
+    else:
+        st.warning("Please complete the Google login process.")
 
-
-
-
-if st.session_state.user_email:
-
+else:
+    
+    st.success(f"Welcome, {st.session_state.user_name}!")
     # Google Sheets authentication
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     creds_dict = st.secrets["google_credentials"]["json"]
@@ -78,6 +97,7 @@ if st.session_state.user_email:
     # Fetch Data from Google Sheets
     data = sheet.get_all_records()
     df = pd.DataFrame(data)
+    df = df[df["Email"]==st.session_state.user_email]
 
     # Modal for Data Entry Form
     if not st.session_state.show_modal:
@@ -120,7 +140,8 @@ if st.session_state.user_email:
     else:
         with st.form("effects_form"):
             st.subheader("Record a New Entry" if st.session_state.edit_index is None else "Edit Entry")
-
+            
+            email_value = st.session_state.user_email
             if st.session_state.edit_index is not None:
                 
                 # Get selected row data
@@ -147,7 +168,7 @@ if st.session_state.user_email:
             cancel = st.form_submit_button("Cancel")
 
             if submitted:
-                row = [activity, problems, duration, reactions, effectiveness]
+                row = [email_value, activity, problems, duration, reactions, effectiveness]
                 if st.session_state.edit_index is None:
                     # Append New Entry
                     sheet.append_row(row)
