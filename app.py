@@ -3,7 +3,6 @@ import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
 
-
 # Google Sheets authentication
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds_dict = st.secrets["google_credentials"]["json"]
@@ -16,9 +15,9 @@ SHEET_NAME = "Ruqyah Effects"
 sheet = client.open(SHEET_NAME).sheet1
 
 # Streamlit UI
-st.title("Ruqyah Effects")
+st.title("Ruqyah Effects Tracker")
 
-# Session State for Editing and Modal
+# Session State for Editing
 if "edit_index" not in st.session_state:
     st.session_state.edit_index = None
 
@@ -28,10 +27,6 @@ if "show_modal" not in st.session_state:
 # Fetch Data from Google Sheets
 data = sheet.get_all_records()
 df = pd.DataFrame(data)
-
-
-
-
 
 # Modal for Data Entry Form
 if not st.session_state.show_modal:
@@ -43,73 +38,79 @@ if not st.session_state.show_modal:
         st.session_state.show_modal = True  # Open the modal
         st.session_state.edit_index = None  # Reset edit mode
         st.rerun()  # Refresh the app
-
+            
     if not df.empty:
-        # Display Table with Edit Buttons
+        st.write("### Recorded Entries:")
+        
+        # Create Table with Buttons
         for index, row in df.iterrows():
-            cols = st.columns(8)
-            cols[0].write(row["Activity"])
-            cols[1].write(row["Before Condition"])  # Ensure this matches the column name in your Google Sheets
-            cols[2].write(row["Before Severity"])   # Ensure this matches the column name in your Google Sheets
-            cols[3].write(row["Duration"])
-            cols[4].write(row["After Condition"])   # Ensure this matches the column name in your Google Sheets
-            cols[5].write(row["After Severity"])    # Ensure this matches the column name in your Google Sheets
-            cols[6].write(row["Effectiveness"])
-            if cols[7].button("✏️ Edit", key=index):
-                st.session_state.edit_index = index  # Store row index for editing
-                st.session_state.show_modal = True  # Open the modal
-                st.rerun()  # Refresh the app
+            col1, col2, col3, col4 = st.columns([2, 4, 4, 1])
+            
+            with col1:
+                st.write(f"**{row['Activity']}** -> {row['Effectiveness']}")
+        
+            with col2:
+                st.write(f"{row['Problems'][:200]}{'...' if len(row['Problems']) > 200 else ''}")
+
+
+            with col3:
+                st.write(f"{row['Reactions'][:200]}{'...' if len(row['Reactions']) > 200 else ''}")
+
+            with col4:
+                if st.button(f"✏️", key=f"edit_{index}"):
+                    st.session_state.edit_index = index
+                    st.session_state.show_modal = True
+                    st.rerun()  # Refresh the app
+            st.divider()
+
     else:
         st.info("No data recorded yet.")
+
 else:
     with st.form("effects_form"):
         st.subheader("Record a New Entry" if st.session_state.edit_index is None else "Edit Entry")
 
-        # If editing, get selected row data
         if st.session_state.edit_index is not None:
+            
+            # Get selected row data
             row_data = df.iloc[st.session_state.edit_index]
             activity_value = row_data["Activity"]
-            pre_condition_value = row_data["Before Condition"]  # Ensure this matches the column name in your Google Sheets
-            pre_intensity_value = row_data["Before Severity"]   # Ensure this matches the column name in your Google Sheets
+            problems_value = row_data["Problems"]
             duration_value = row_data["Duration"]
-            post_condition_value = row_data["After Condition"]  # Ensure this matches the column name in your Google Sheets
-            post_intensity_value = row_data["After Severity"]   # Ensure this matches the column name in your Google Sheets
+            reactions_value = row_data["Reactions"]
             effectiveness_value = row_data["Effectiveness"]
         else:
             activity_value = ""
-            pre_condition_value = ""
-            pre_intensity_value = 5
+            problems_value = ""
             duration_value = 1
-            post_condition_value = ""
-            post_intensity_value = 5
-            effectiveness_value = "Very Effective"
+            reactions_value = ""
+            effectiveness_value = 5
 
-        activity = st.text_input("Activity (e.g., Read Quran, Took Medicine)", value=activity_value)
-        pre_condition = st.text_area("Pre-Condition (How you felt before)", value=pre_condition_value)
-        pre_intensity = st.slider("Pre-Condition Intensity (0-10)", 0, 10, pre_intensity_value)
-        duration = st.number_input("Duration (minutes)", min_value=1, value=duration_value)
-        post_condition = st.text_area("Post-Condition (How you felt after)", value=post_condition_value)
-        post_intensity = st.slider("Post-Condition Intensity (0-10)", 0, 10, post_intensity_value)
-        effectiveness = st.selectbox("Effectiveness", ["Very Effective", "Somewhat Effective", "Not Effective"], index=["Very Effective", "Somewhat Effective", "Not Effective"].index(effectiveness_value))
-        
+        activity = st.text_input("Activity", value=activity_value)
+        problems = st.text_area("Pre-Condition", value=problems_value)
+        duration = st.number_input("Duration (hours)", min_value=0, value=duration_value)
+        reactions = st.text_area("Post-Condition", value=reactions_value)
+        effectiveness = st.slider("Effectiveness (0-10)", 0, 10, effectiveness_value)
+
         submitted = st.form_submit_button("Submit")
         cancel = st.form_submit_button("Cancel")
 
         if submitted:
-            row = [activity, pre_condition, pre_intensity, duration, post_condition, post_intensity, effectiveness]
+            row = [activity, problems, duration, reactions, effectiveness]
             if st.session_state.edit_index is None:
                 # Append New Entry
                 sheet.append_row(row)
                 st.success("Data submitted successfully!")
+                st.session_state.show_modal = False
             else:
-                # Update Existing Entry
-                sheet.update(range_name=f"A{st.session_state.edit_index+2}:G{st.session_state.edit_index+2}", values=[row])  # Corrected update method
+                sheet.update(range_name=f"A{st.session_state.edit_index+2}:G{st.session_state.edit_index+2}", values=[row])
                 st.success("Data updated successfully!")
-                st.session_state.edit_index = None  # Reset Edit Mode
-            st.session_state.show_modal = False  # Close the modal
-            st.rerun()  # Refresh the app
+                st.session_state.edit_index = None
+                st.session_state.show_modal = False
+            
+            st.rerun()
 
         if cancel:
-            st.session_state.show_modal = False  # Close the modal
-            st.session_state.edit_index = None  # Reset edit mode
-            st.rerun()  # Refresh the app
+            st.session_state.edit_index = None
+            st.session_state.show_modal = False
+            st.rerun()
