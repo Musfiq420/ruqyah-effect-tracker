@@ -15,13 +15,14 @@ from urllib.parse import urlencode
 creds_auth = st.secrets["oauth_credentials"]["json"]
 
 # Use the credentials to authorize the OAuth flow
-REDIRECT_URI = "https://ruqyah-effect-tracker.streamlit.app/"  # Streamlit default local URL
+# REDIRECT_URI = "https://ruqyah-effect-tracker.streamlit.app/"  # Streamlit default local URL
+REDIRECT_URI = "http://localhost:8501/"  # Streamlit default local URL
+
 SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/userinfo.profile",
     "openid"
 ]
-
 # Authentication
 if "user_email" not in st.session_state:
     st.session_state.user_email = None
@@ -38,8 +39,8 @@ def authenticate_user():
 def get_user_info():
     """Fetch user info after authentication"""
     # Construct the full redirect URL from query parameters
-    query_string = urlencode(st.query_params.to_dict())
-    redirect_response = f"{REDIRECT_URI}?{query_string}"
+    query_params = st.query_params.to_dict()
+    redirect_response = f"{REDIRECT_URI}?{urlencode(query_params)}"
 
     # Initialize the OAuth flow
     flow = Flow.from_client_config(
@@ -56,19 +57,30 @@ def get_user_info():
     
     return user_info["email"], user_info["name"]
 
+# st.write(st.query_params)
+# Check if the user is already logged in via query params
 if st.session_state.user_email is None:
-    authenticate_user()
-    if "code" in st.query_params:
-        try:
-            email, name = get_user_info()
-            st.session_state.user_email = email
-            st.session_state.user_name = name
-            st.success(f"Welcome, {name} ({email})!")
-            st.rerun()
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
+    
+    if "user_email" in st.query_params:
+        
+        st.session_state.user_email = st.query_params["user_email"]
+        st.session_state.user_name = st.query_params["user_name"]
+        st.rerun()
     else:
-        st.warning("Please complete the Google login process.")
+        authenticate_user()
+        if "code" in st.query_params:
+            try:
+                email, name = get_user_info()
+                st.session_state.user_email = email
+                st.session_state.user_name = name
+                st.query_params["user_email"] = email
+                st.query_params["user_name"] = name
+                st.success(f"Welcome, {name} ({email})!")
+                st.rerun()
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
+        else:
+            st.warning("Please complete the Google login process.")
 
 else:
     
