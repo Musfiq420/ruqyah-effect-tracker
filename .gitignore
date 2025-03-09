@@ -1,0 +1,31 @@
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+.env/
+venv/
+*.egg-info/
+
+# Streamlit config and cache
+.streamlit/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Environment Variables (Optional: .env files for local configurations)
+.env
+
+# Google credentials (if any)
+*.json
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
