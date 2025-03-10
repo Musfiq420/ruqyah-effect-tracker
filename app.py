@@ -84,7 +84,8 @@ if st.session_state.user_email is None or st.session_state.user_email is '0':
             st.session_state.user_name = name
             st.query_params["user_email"] = email
             st.query_params["user_name"] = name
-            st.query_params.clear()
+            # st.query_params.clear()
+            
             st.success(f"Welcome, {name} ({email})!")
             st_javascript(f"localStorage.setItem('ruqyah_effect_tracker_user_email', '{email}');")
             st.rerun()
