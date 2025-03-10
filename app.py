@@ -12,7 +12,7 @@ from urllib.parse import urlencode
 import json
 from streamlit_javascript import st_javascript
 from streamlit_local_storage import LocalStorage
-
+from datetime import datetime
 
 
 # Google OAuth setup
@@ -85,7 +85,7 @@ if st.session_state.user_email is None or st.session_state.user_email is '0':
             st.query_params["user_email"] = email
             st.query_params["user_name"] = name
             # st.query_params.clear()
-            
+
             st.success(f"Welcome, {name} ({email})!")
             st_javascript(f"localStorage.setItem('ruqyah_effect_tracker_user_email', '{email}');")
             st.rerun()
@@ -128,12 +128,20 @@ else:
 
     # Fetch Data from Google Sheets
     data = sheet.get_all_records()
-    df = pd.DataFrame(data)
-    df = df[df["Email"]==st.session_state.user_email]
+    df_all = pd.DataFrame(data)
+    # df = df_all[df_all["Email"]==st.session_state.user_email]
 
     # Modal for Data Entry Form
     if not st.session_state.show_modal:
+        # Date Picker for filtering (default to today)
+        selected_date = st.date_input("Select Date", datetime.today().date())
+        selected_date_str = selected_date.strftime("%Y-%m-%d")
 
+        # Filter data by user and selected date
+        
+        df = df_all[(df_all["Email"] == st.session_state.user_email) & 
+                    (df_all["Timestamp"].str.startswith(selected_date_str))]
+        
         # Display the Recorded Data Table
         st.subheader("Recorded Data")
         # Add Record Button
@@ -150,7 +158,7 @@ else:
                 col1, col2, col3, col4 = st.columns([2, 4, 4, 1])
                 
                 with col1:
-                    st.write(f"**{row['Activity']}** -> {row['Effectiveness']}")
+                    st.write(f"{datetime.strptime(row['Timestamp'], "%Y-%m-%d %H:%M:%S").strftime("%d %b %y")}, **{row['Activity']}** -> {row['Effectiveness']}")
             
                 with col2:
                     st.write(f"{row['Problems'][:200]}{'...' if len(row['Problems']) > 200 else ''}")
@@ -177,30 +185,32 @@ else:
             if st.session_state.edit_index is not None:
                 
                 # Get selected row data
-                row_data = df.iloc[st.session_state.edit_index]
+                row_data = df_all.iloc[st.session_state.edit_index]
+                timestamp_value = row_data["Timestamp"]
                 activity_value = row_data["Activity"]
                 problems_value = row_data["Problems"]
                 duration_value = row_data["Duration"]
                 reactions_value = row_data["Reactions"]
                 effectiveness_value = row_data["Effectiveness"]
             else:
+                timestamp_value = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 activity_value = ""
                 problems_value = ""
                 duration_value = 1
                 reactions_value = ""
                 effectiveness_value = 5
 
-            activity = st.text_input("Activity", value=activity_value)
-            problems = st.text_area("Pre-Condition", value=problems_value)
+            activity = st.text_input("Ruqyah", value=activity_value)
+            problems = st.text_area("Problems", value=problems_value)
             duration = st.number_input("Duration (hours)", min_value=0, value=duration_value)
-            reactions = st.text_area("Post-Condition", value=reactions_value)
+            reactions = st.text_area("Reactions", value=reactions_value)
             effectiveness = st.slider("Effectiveness (0-10)", 0, 10, effectiveness_value)
 
             submitted = st.form_submit_button("Submit")
             cancel = st.form_submit_button("Cancel")
 
             if submitted:
-                row = [email_value, activity, problems, duration, reactions, effectiveness]
+                row = [email_value, timestamp_value, activity, problems, duration, reactions, effectiveness]
                 if st.session_state.edit_index is None:
                     # Append New Entry
                     sheet.append_row(row)
