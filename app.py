@@ -9,23 +9,38 @@ from google_auth_oauthlib.flow import Flow
 import pandas as pd
 import requests
 from urllib.parse import urlencode
+import json
+from streamlit_javascript import st_javascript
+from streamlit_local_storage import LocalStorage
+
+
 
 # Google OAuth setup
 # Load OAuth credentials from Streamlit secrets
 creds_auth = st.secrets["oauth_credentials"]["json"]
 
 # Use the credentials to authorize the OAuth flow
-REDIRECT_URI = "https://ruqyah-effect-tracker.streamlit.app/"  # Streamlit default local URL
-# REDIRECT_URI = "http://localhost:8501/"  # Streamlit default local URL
+# REDIRECT_URI = "https://ruqyah-effect-tracker.streamlit.app/"  # Streamlit default local URL
+REDIRECT_URI = "http://localhost:8501/"  # Streamlit default local URL
 
 SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/userinfo.profile",
     "openid"
 ]
+localS = LocalStorage()
+
+# Authentication
+if "out_state" not in st.session_state:
+    st.session_state.out_state = False
+
 # Authentication
 if "user_email" not in st.session_state:
-    st.session_state.user_email = None
+    st.session_state.user_email =localS.getItem("ruqyah_effect_tracker_user_email")
+    
+if st.session_state.out_state:
+    st_javascript("localStorage.removeItem('ruqyah_effect_tracker_user_email');")
+    st.session_state.out_state = False
 
 def authenticate_user():
     """Start the OAuth authentication flow"""
@@ -59,32 +74,36 @@ def get_user_info():
 
 # st.write(st.query_params)
 # Check if the user is already logged in via query params
-if st.session_state.user_email is None:
+if st.session_state.user_email is None or st.session_state.user_email is '0':
     
-    if "user_email" in st.query_params:
-        
-        st.session_state.user_email = st.query_params["user_email"]
-        st.session_state.user_name = st.query_params["user_name"]
-        st.rerun()
+    authenticate_user()
+    if "code" in st.query_params:
+        try:
+            email, name = get_user_info()
+            st.session_state.user_email = email
+            st.session_state.user_name = name
+            st.query_params["user_email"] = email
+            st.query_params["user_name"] = name
+            st.query_params.clear()
+            st.success(f"Welcome, {name} ({email})!")
+            st_javascript(f"localStorage.setItem('ruqyah_effect_tracker_user_email', '{email}');")
+            st.rerun()
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
     else:
-        authenticate_user()
-        if "code" in st.query_params:
-            try:
-                email, name = get_user_info()
-                st.session_state.user_email = email
-                st.session_state.user_name = name
-                st.query_params["user_email"] = email
-                st.query_params["user_name"] = name
-                st.success(f"Welcome, {name} ({email})!")
-                st.rerun()
-            except Exception as e:
-                st.error(f"An error occurred: {e}")
-        else:
-            st.warning("Please complete the Google login process.")
+        st.warning("Please complete the Google login process.")
 
 else:
+    col1, col2 = st.columns([2,1])
+    with col1:
+        st.success(f"Welcome, {st.session_state.user_email}!")
+    with col2:
+        if st.button("Logout"):
+              # Execute JavaScript first
+            st.session_state.user_email = None
+            st.session_state.out_state = True
+            st.rerun() # Reset session state
     
-    st.success(f"Welcome, {st.session_state.user_name}!")
     # Google Sheets authentication
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     creds_dict = st.secrets["google_credentials"]["json"]
