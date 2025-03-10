@@ -75,6 +75,8 @@ def get_user_info():
 # st.write(st.query_params)
 # Check if the user is already logged in via query params
 if st.session_state.user_email is None or st.session_state.user_email is '0':
+    # Streamlit UI
+    st.title("Ruqyah Effects Tracker")
     
     authenticate_user()
     if "code" in st.query_params:
