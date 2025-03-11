@@ -15,6 +15,13 @@ from streamlit_local_storage import LocalStorage
 from datetime import datetime
 import pytz
 
+# Set the page title and icon
+st.set_page_config(
+    page_title="Ruqyah Effects Tracker",
+    page_icon="favicon.ico",  # Replace with your icon URL
+    layout="wide",
+)
+
 
 # Google OAuth setup
 # Load OAuth credentials from Streamlit secrets
