@@ -22,6 +22,11 @@ st.set_page_config(
     layout="wide",
 )
 
+manifest_url = "/manifest.json"  # Replace with your hosted manifest URL
+
+st.markdown(f"""
+    <link rel="manifest" href="{manifest_url}">
+""", unsafe_allow_html=True)
 
 # Google OAuth setup
 # Load OAuth credentials from Streamlit secrets

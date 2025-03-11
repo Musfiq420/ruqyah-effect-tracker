@@ -9,6 +9,7 @@ venv/
 
 # Streamlit config and cache
 .streamlit/
+.secrets/
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
@@ -16,8 +17,6 @@ venv/
 # Environment Variables (Optional: .env files for local configurations)
 .env
 
-# Google credentials (if any)
-*.json
 
 # IDE specific files
 .vscode/
