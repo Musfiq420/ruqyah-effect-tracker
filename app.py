@@ -13,6 +13,7 @@ import json
 from streamlit_javascript import st_javascript
 from streamlit_local_storage import LocalStorage
 from datetime import datetime
+import pytz
 
 
 # Google OAuth setup
@@ -195,7 +196,8 @@ else:
                 reactions_value = row_data["Reactions"]
                 effectiveness_value = row_data["Effectiveness"]
             else:
-                timestamp_value = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                dhaka_tz = pytz.timezone("Asia/Dhaka")
+                timestamp_value = datetime.now(dhaka_tz).strftime("%Y-%m-%d %H:%M:%S")
                 activity_value = ""
                 problems_value = ""
                 duration_value = 1
