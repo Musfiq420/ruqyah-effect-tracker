@@ -95,7 +95,7 @@ if st.session_state.user_email is None or st.session_state.user_email is '0':
     f"""
     <div style="display: flex; align-items: center;">
         <img src="https://cdn-icons-png.flaticon.com/128/10741/10741222.png" width="40" style="margin-right: 10px;">
-        <h1 style="margin: 0;">Ruqyah Effects Tracker</h1>
+        <h2 style="margin: 0;">Ruqyah Effects Tracker</h2>
     </div>
     """,
     unsafe_allow_html=True
@@ -145,7 +145,7 @@ else:
     f"""
     <div style="display: flex; align-items: center;">
         <img src="https://cdn-icons-png.flaticon.com/128/10741/10741222.png" width="40" style="margin-right: 10px;">
-        <h1 style="margin: 0;">Ruqyah Effects Tracker</h1>
+        <h2 style="margin: 0;">Ruqyah Effects Tracker</h2>
     </div>
     """,
     unsafe_allow_html=True
