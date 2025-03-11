@@ -161,7 +161,7 @@ else:
                 col1, col2, col3, col4 = st.columns([2, 4, 4, 1])
                 
                 with col1:
-                    st.write(f"{datetime.strptime(row['Timestamp'], "%Y-%m-%d %H:%M:%S").strftime("%d %b %y")}, **{row['Activity']}** -> {row['Effectiveness']}")
+                    st.write(f"{datetime.strptime(row['Timestamp'], "%Y-%m-%d %H:%M:%S").strftime("%-I %p, %d %b %y")}, **{row['Activity']}** -> {row['Effectiveness']}")
             
                 with col2:
                     st.write(f"{row['Problems'][:200]}{'...' if len(row['Problems']) > 200 else ''}")
