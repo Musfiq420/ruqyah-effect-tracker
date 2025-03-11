@@ -18,7 +18,7 @@ import pytz
 # Set the page title and icon
 st.set_page_config(
     page_title="Ruqyah Effects Tracker",
-    page_icon="favicon.ico",  # Replace with your icon URL
+    page_icon="https://cdn-icons-png.flaticon.com/128/10741/10741222.png",  # Replace with your icon URL
     layout="wide",
 )
 
