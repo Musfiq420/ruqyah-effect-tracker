@@ -89,7 +89,17 @@ def get_user_info():
 # Check if the user is already logged in via query params
 if st.session_state.user_email is None or st.session_state.user_email is '0':
     # Streamlit UI
-    st.title("Ruqyah Effects Tracker")
+    
+    # st.title("Ruqyah Effects Tracker")
+    st.markdown(
+    f"""
+    <div style="display: flex; align-items: center;">
+        <img src="https://cdn-icons-png.flaticon.com/128/10741/10741222.png" width="40" style="margin-right: 10px;">
+        <h1 style="margin: 0;">Ruqyah Effects Tracker</h1>
+    </div>
+    """,
+    unsafe_allow_html=True
+    )
     
     authenticate_user()
     if "code" in st.query_params:
@@ -131,8 +141,15 @@ else:
     SHEET_NAME = "Ruqyah Effects"
     sheet = client.open(SHEET_NAME).sheet1
 
-    # Streamlit UI
-    st.title("Ruqyah Effects Tracker")
+    st.markdown(
+    f"""
+    <div style="display: flex; align-items: center;">
+        <img src="https://cdn-icons-png.flaticon.com/128/10741/10741222.png" width="40" style="margin-right: 10px;">
+        <h1 style="margin: 0;">Ruqyah Effects Tracker</h1>
+    </div>
+    """,
+    unsafe_allow_html=True
+    )
 
     # Session State for Editing
     if "edit_index" not in st.session_state:
